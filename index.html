@@ -281,6 +281,7 @@
     <button role="tab" aria-selected="false" data-target="potenziale">3 · Energia potenziale</button>
     <button role="tab" aria-selected="false" data-target="conservazione">4 · Conservazione</button>
     <button role="tab" aria-selected="false" data-target="potenza">5 · Potenza</button>
+    <button role="tab" aria-selected="false" data-target="finale">Quiz finale</button>
   </div>
 </nav>
 
@@ -326,6 +327,7 @@
         <a href="#" data-goto="potenziale"><span class="n">Sezione 3</span><span class="t">Energia potenziale</span><span class="d">Gravitazionale ed elastica.</span></a>
         <a href="#" data-goto="conservazione"><span class="n">Sezione 4</span><span class="t">Conservazione</span><span class="d">Energia meccanica e attrito.</span></a>
         <a href="#" data-goto="potenza"><span class="n">Sezione 5</span><span class="t">Potenza</span><span class="d">Lavoro nel tempo. Watt.</span></a>
+        <a href="#" data-goto="finale"><span class="n">Verifica</span><span class="t">Quiz finale</span><span class="d">15 domande a caso da un archivio di 60.</span></a>
       </div>
     </div>
 
@@ -680,6 +682,20 @@
 
     <div class="panel" data-sub="ex" hidden><div class="ex-root" data-ex="potenza"></div></div>
     <div class="panel" data-sub="quiz" hidden><div class="quiz-root" data-quiz="potenza"></div></div>
+  </section>
+
+  <!-- ================= QUIZ FINALE ================= -->
+  <section class="sec" id="sec-finale" role="tabpanel" hidden>
+    <div class="sec-kicker">Verifica finale</div>
+    <h2>Quiz finale</h2>
+    <div class="card">
+      <p class="lead">Una verifica su tutto il programma: <b>15 domande</b> scelte a caso da un
+        archivio di <b>60</b>, che spaziano fra lavoro, energia cinetica ed energia potenziale,
+        conservazione dell'energia e potenza.</p>
+      <p class="muted">Una domanda alla volta, con punteggio e correzione immediata. Ogni volta che
+        ricominci ricevi una selezione diversa: al termine puoi rigenerare 15 nuove domande.</p>
+    </div>
+    <div class="final-root" id="final-root"></div>
   </section>
 
 </main>
@@ -1947,8 +1963,8 @@
     ]
   };
 
-  function buildQuiz(section, root) {
-    var data = QUIZ[section];
+  function mountQuiz(data, root, opts) {
+    opts = opts || {};
     var state = { i: 0, chosen: data.map(function () { return null; }), score: 0 };
 
     root.innerHTML =
@@ -1976,7 +1992,9 @@
         elFb.className = 'q-fb';
         var pct = Math.round(100 * state.score / n);
         var msg = pct >= 80 ? 'Ottimo lavoro!' : pct >= 50 ? 'Bene, puoi ancora migliorare.' : 'Rivedi la teoria e riprova.';
-        elArea.innerHTML = '<div class="quiz-done"><div class="big">' + state.score + ' / ' + n + '</div><p class="muted">' + msg + '</p></div>';
+        elArea.innerHTML = '<div class="quiz-done"><div class="big">' + state.score + ' / ' + n + '</div><p class="muted">' + msg + '</p>' +
+          (opts.onRestart ? '<button class="btn qrestart" style="margin-top:12px">↻ Nuovo quiz (15 domande)</button>' : '') + '</div>';
+        if (opts.onRestart) { var rb = $('.qrestart', elArea); if (rb) rb.addEventListener('click', opts.onRestart); }
         btnPrev.style.visibility = 'visible';
         btnNext.style.visibility = 'hidden';
         return;
@@ -2030,6 +2048,63 @@
     render();
   }
 
+  function buildQuiz(section, root) { mountQuiz(QUIZ[section], root, {}); }
+
+  /* ============================================================
+     QUIZ FINALE — 15 domande pescate a caso da un archivio di 60
+     (le 50 dei quiz di sezione + 10 domande trasversali)
+     ============================================================ */
+  var FINAL_EXTRA = [
+    { q: 'Un corpo si muove a velocità costante su un piano orizzontale con attrito. Il lavoro totale su di esso è:',
+      options: ['nullo', 'positivo', 'negativo', 'impossibile da dire'], correct: 0,
+      exp: 'A velocità costante ΔEₒ = 0, quindi per il teorema dell’energia cinetica il lavoro totale è nullo: la spinta bilancia l’attrito.' },
+    { q: 'Quale grandezza si misura in watt?',
+      options: ['il lavoro', 'l’energia', 'la forza', 'la potenza'], correct: 3,
+      exp: 'Il watt (W = J/s) è l’unità di misura della potenza.' },
+    { q: 'Una biglia rotola giù da una collina liscia. Durante la discesa:',
+      options: ['l’energia meccanica aumenta', 'l’energia potenziale si trasforma in cinetica', 'l’energia cinetica diventa calore', 'la velocità resta costante'], correct: 1,
+      exp: 'Senza attrito l’energia si conserva: la quota cala, quindi U si trasforma in Eₒ e la biglia accelera.' },
+    { q: 'Un joule è uguale a:',
+      options: ['1 N/m', '1 kg·m/s', '1 N·m', '1 W·m'], correct: 2,
+      exp: '1 J = 1 N·m (forza per spostamento).' },
+    { q: 'Raddoppiando sia la massa sia la velocità di un corpo, la sua energia cinetica diventa:',
+      options: ['il doppio', 'il quadruplo', 'sedici volte', 'otto volte'], correct: 3,
+      exp: 'Eₒ = ½mv² ∝ m·v²: massa ×2 e velocità ×2 danno ×2×4 = ×8.' },
+    { q: 'Un sasso lanciato verso l’alto rallenta salendo. Il lavoro della forza peso durante la salita è:',
+      options: ['negativo', 'positivo', 'nullo', 'uguale all’energia cinetica'], correct: 0,
+      exp: 'Il peso è opposto allo spostamento verso l’alto: compie lavoro negativo e l’energia cinetica diminuisce.' },
+    { q: 'Due corpi hanno la stessa energia cinetica, ma A è più pesante di B. Quale va più veloce?',
+      options: ['A', 'B', 'vanno uguali', 'impossibile da dire'], correct: 1,
+      exp: 'A parità di Eₒ = ½mv², a massa minore corrisponde velocità maggiore: il più leggero (B) è più veloce.' },
+    { q: 'L’energia potenziale elastica di una molla dipende:',
+      options: ['solo dalla costante k', 'dalla velocità della molla', 'dal quadrato della deformazione', 'dal tempo'], correct: 2,
+      exp: 'U = ½kx²: dipende dal quadrato della deformazione x (oltre che dalla costante k).' },
+    { q: 'In una centrale idroelettrica l’acqua che cade dall’alto trasforma energia:',
+      options: ['potenziale in cinetica (e poi elettrica)', 'cinetica in potenziale', 'termica in potenziale', 'elettrica in cinetica'], correct: 0,
+      exp: 'L’acqua in quota ha energia potenziale, che cadendo diventa cinetica e infine elettrica.' },
+    { q: 'Un ascensore solleva la stessa cassa alla stessa altezza, una volta lentamente e una volta velocemente. Nel caso veloce, rispetto a quello lento:',
+      options: ['il lavoro è maggiore', 'il lavoro è minore', 'sia lavoro sia potenza sono minori', 'il lavoro è uguale ma la potenza è maggiore'], correct: 3,
+      exp: 'Il lavoro (mgh) dipende solo da peso e altezza, non dal tempo; farlo più in fretta richiede più potenza (P = L/t).' }
+  ];
+
+  function finalPool() {
+    var pool = [];
+    ['lavoro', 'cinetica', 'potenziale', 'conservazione', 'potenza'].forEach(function (k) {
+      QUIZ[k].forEach(function (q) { pool.push(q); });
+    });
+    FINAL_EXTRA.forEach(function (q) { pool.push(q); });
+    return pool; // 50 + 10 = 60
+  }
+  function shuffleTake(arr, n) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a.slice(0, n);
+  }
+  function buildFinalQuiz(root) {
+    var pick = shuffleTake(finalPool(), 15);
+    mountQuiz(pick, root, { onRestart: function () { buildFinalQuiz(root); } });
+  }
+
   /* ============================================================
      AVVIO
      ============================================================ */
@@ -2043,6 +2118,7 @@
     initSimPotenza();
     $all('.ex-root').forEach(function (r) { buildExercises(r.dataset.ex, r); });
     $all('.quiz-root').forEach(function (r) { buildQuiz(r.dataset.quiz, r); });
+    var fr = $('#final-root'); if (fr) buildFinalQuiz(fr);
     typeset(document.body);
   }
 
