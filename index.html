@@ -327,7 +327,7 @@
         <a href="#" data-goto="potenziale"><span class="n">Sezione 3</span><span class="t">Energia potenziale</span><span class="d">Gravitazionale ed elastica.</span></a>
         <a href="#" data-goto="conservazione"><span class="n">Sezione 4</span><span class="t">Conservazione</span><span class="d">Energia meccanica e attrito.</span></a>
         <a href="#" data-goto="potenza"><span class="n">Sezione 5</span><span class="t">Potenza</span><span class="d">Lavoro nel tempo. Watt.</span></a>
-        <a href="#" data-goto="finale"><span class="n">Verifica</span><span class="t">Quiz finale</span><span class="d">15 domande a caso da un archivio di 60.</span></a>
+        <a href="#" data-goto="finale"><span class="n">Verifica</span><span class="t">Quiz finale</span><span class="d">15 domande (3 per argomento) da un archivio di 60.</span></a>
       </div>
     </div>
 
@@ -689,9 +689,9 @@
     <div class="sec-kicker">Verifica finale</div>
     <h2>Quiz finale</h2>
     <div class="card">
-      <p class="lead">Una verifica su tutto il programma: <b>15 domande</b> scelte a caso da un
-        archivio di <b>60</b>, che spaziano fra lavoro, energia cinetica ed energia potenziale,
-        conservazione dell'energia e potenza.</p>
+      <p class="lead">Una verifica su tutto il programma: <b>15 domande</b> estratte a caso da un
+        archivio di <b>60</b>, in modo <b>bilanciato</b> — <b>3 domande per argomento</b> (lavoro,
+        energia cinetica, energia potenziale, conservazione e potenza).</p>
       <p class="muted">Una domanda alla volta, con punteggio e correzione immediata. Ogni volta che
         ricominci ricevi una selezione diversa: al termine puoi rigenerare 15 nuove domande.</p>
     </div>
@@ -2087,13 +2087,15 @@
       exp: 'Il lavoro (mgh) dipende solo da peso e altezza, non dal tempo; farlo più in fretta richiede più potenza (P = L/t).' }
   ];
 
-  function finalPool() {
-    var pool = [];
-    ['lavoro', 'cinetica', 'potenziale', 'conservazione', 'potenza'].forEach(function (k) {
-      QUIZ[k].forEach(function (q) { pool.push(q); });
-    });
-    FINAL_EXTRA.forEach(function (q) { pool.push(q); });
-    return pool; // 50 + 10 = 60
+  // A ogni domanda trasversale è associato un argomento, così l'archivio (60)
+  // resta suddiviso per argomento e l'estrazione può essere bilanciata.
+  var FINAL_EXTRA_TOPIC = ['lavoro', 'potenza', 'conservazione', 'lavoro', 'cinetica', 'lavoro', 'cinetica', 'potenziale', 'conservazione', 'potenza'];
+  var FINAL_TOPICS = ['lavoro', 'cinetica', 'potenziale', 'conservazione', 'potenza'];
+  function poolByTopic() {
+    var byT = { lavoro: [], cinetica: [], potenziale: [], conservazione: [], potenza: [] };
+    FINAL_TOPICS.forEach(function (k) { QUIZ[k].forEach(function (q) { byT[k].push(q); }); });
+    FINAL_EXTRA.forEach(function (q, i) { byT[FINAL_EXTRA_TOPIC[i]].push(q); });
+    return byT; // 13 + 12 + 11 + 12 + 12 = 60
   }
   function shuffleTake(arr, n) {
     var a = arr.slice();
@@ -2101,7 +2103,11 @@
     return a.slice(0, n);
   }
   function buildFinalQuiz(root) {
-    var pick = shuffleTake(finalPool(), 15);
+    // estrazione bilanciata: 3 domande a caso da ciascuno dei 5 argomenti (= 15)
+    var byT = poolByTopic();
+    var pick = [];
+    FINAL_TOPICS.forEach(function (k) { pick = pick.concat(shuffleTake(byT[k], 3)); });
+    pick = shuffleTake(pick, pick.length); // rimescola così gli argomenti si alternano
     mountQuiz(pick, root, { onRestart: function () { buildFinalQuiz(root); } });
   }
 
